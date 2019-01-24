@@ -1,7 +1,9 @@
+from typing import List
+
+import keras
 from keras import Sequential
 from keras import layers as layers
-import keras
-from typing import List
+
 BATCH_SIZE: int = 1
 IMAGE_SIZE: List[int] = [768, 768, 3]
 
@@ -24,21 +26,24 @@ def add_downsample_layer(layer: keras.layers.Layer, filters: int):
     return sample_down_layer, cnn_layer_2
 
 
-def add_expansive_layer(input_layer, filters_to_begin_with: int,
+def add_expansive_layer(input_layer, filters_to_end_with: int,
                         downsample_input_layer) -> Sequential:
+    print("filters: ", filters_to_end_with)
     # Upsample
-    upsample_layer = layers.Conv2DTranspose(filters_to_begin_with, kernel_size=(2, 2),
+    upsample_layer = layers.Conv2DTranspose(filters_to_end_with, kernel_size=(2, 2),
                                             data_format="channels_last")(input_layer)
 
     # Crop the downsample_input_layer down to concatenate with the previous
     # crop_height, crop_width = get_crop_shape(downsample_input_layer, upsample_layer)
-    concatenation_layer = layers.concatenate([upsample_layer, downsample_input_layer], axis=-1)
-    cnn_layer_1 = layers.Conv2D(filters=filters_to_begin_with // 2,
+    print("Upsample layer: ", upsample_layer)
+    print("Input layer to concatenate: ", downsample_input_layer)
+    concatenation_layer = layers.concatenate([upsample_layer, downsample_input_layer])
+    cnn_layer_1 = layers.Conv2D(filters=filters_to_end_with // 2,
                                 kernel_size=(3, 3), activation="relu",
                                 data_format="channels_last",
                                 padding="same")(concatenation_layer)
     cnn_layer_1_norm = layers.BatchNormalization()(cnn_layer_1)
-    cnn_layer_2 = layers.Conv2D(filters=filters_to_begin_with // 2,
+    cnn_layer_2 = layers.Conv2D(filters=filters_to_end_with // 2,
                                 kernel_size=(3, 3),
                                 activation="relu",
                                 data_format="channels_last",
@@ -47,25 +52,7 @@ def add_expansive_layer(input_layer, filters_to_begin_with: int,
     return cnn_layer_2_norm
 
 
-# def get_crop_shape(target: layers.Layer, refer: layers.Layer):
-#     # width, the 3rd dimension
-#     cw = (target.get_shape()[2] - refer.output_shape[2]).value
-#     assert (cw >= 0)
-#     if cw % 2 != 0:
-#         cw1, cw2 = int(cw / 2), int(cw / 2) + 1
-#     else:
-#         cw1, cw2 = int(cw / 2), int(cw / 2)
-#     # height, the 2nd dimension
-#     ch = (target.get_shape()[1] - refer.get_shape()[1]).value
-#     assert (ch >= 0)
-#     if ch % 2 != 0:
-#         ch1, ch2 = int(ch / 2), int(ch / 2) + 1
-#     else:
-#         ch1, ch2 = int(ch / 2), int(ch / 2)
-#
-#     return (ch1, ch2), (cw1, cw2)
-
-
+# try: https://www.kaggle.com/keegil/keras-u-net-starter-lb-0-277
 if __name__ == '__main__':
     INITIAL_SIZE = 64
     input_tensor = layers.Input(shape=IMAGE_SIZE, name="Input_tensor")
@@ -88,8 +75,8 @@ if __name__ == '__main__':
     layer_3_norm = layers.BatchNormalization()(layer_3)
     print("layer 3 norm", keras.backend.int_shape(layer_3_norm))
 
-    layer_4_upsampled = add_expansive_layer(layer_3_norm, INITIAL_SIZE*4, layer_2)
-    layer_5_upsampled = add_expansive_layer(layer_4_upsampled, INITIAL_SIZE*2, layer_1)
+    layer_4_upsampled = add_expansive_layer(layer_3_norm, INITIAL_SIZE * 2, layer_2)
+    layer_5_upsampled = add_expansive_layer(layer_4_upsampled, INITIAL_SIZE, layer_1)
 
     output_layer = layers.Conv2D(1, (1, 1), activation="sigmoid", padding="same")(layer_5_upsampled)
 
