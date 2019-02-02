@@ -2,8 +2,10 @@ import random
 from pathlib import PurePath, Path
 import cv2
 import shutil
-OUTPUT_DIRECTORY_LOCATION: str = r"E:\Downloads\fish_conservatory\train_segmentation"
-INPUT_DIRECTORY_LOCATION: str = r"E:\Downloads\fish_conservatory\train"
+
+# Set these for the output and input directory
+OUTPUT_DIRECTORY_LOCATION: str = r'E:\Downloads\fish_conservation\segmentation'
+INPUT_DIRECTORY_LOCATION: str = r'E:\Downloads\fish_conservation\train'
 
 CHANCE_TEST: float = 0.73
 CHANCE_VALIDATION: float = 0.20
@@ -22,8 +24,11 @@ def create_directories(sub_directory_name: PurePath, overwrite=False):
         create_directories(sub_directory_name,  overwrite)
 
 if __name__ == '__main__':
+    # Ensure no more accidental use
+    return
     assert CHANCE_TEST + CHANCE_VALIDATION < 1.0, \
         "The chance of  a test plus  validation has to be less than 1."
+    print(OUTPUT_DIRECTORY_LOCATION)
     root_output_directory: PurePath = PurePath(OUTPUT_DIRECTORY_LOCATION)
     print(root_output_directory)
     train_directory_output: PurePath = PurePath.joinpath(root_output_directory, "train")
