@@ -5,6 +5,7 @@ from typing import List, Tuple, Union, Generator
 from random import shuffle, uniform
 from pathlib import Path
 from scipy import ndimage
+from functools import lru_cache
 
 OUTPUT_DIRECTORY_LOCATION: str = r'E:\Downloads\fish_conservation\segmentation\train'
 
@@ -46,6 +47,13 @@ def rotate(image: np.ndarray, mask: np.ndarray, deg_range: int) -> Tuple[np.ndar
     return image_new, mask_new
 
 
+@lru_cache(maxsize=None)
+def cached_read_image_mask(image_location: str, mask_location: str) -> Tuple[np.ndarray, np.ndarray]:
+    image: np.ndarray = cv2.imread(image_location)
+    mask: np.ndarray = load_output_image(mask_location)
+    return image, mask
+
+
 def generate_image_data(batch_size: int,
                         location: str,
                         number_of_images: Union[int, None] = None,
@@ -77,10 +85,10 @@ def generate_image_data(batch_size: int,
     logging.info(f"list_of_image_locations: {list_of_image_locations}")
     logging.info(f"list_of_mask_locations: {list_of_mask_locations}")
 
-    image_mask_location: List[str] = list(zip(list_of_image_locations, list_of_mask_locations))
+    image_mask_location: List[Tuple[str, str]] = list(zip(list_of_image_locations, list_of_mask_locations))
 
     # Count the number of times the loop has progressed
-    number_of_loops:int = 0
+    number_of_loops: int = 0
 
     while True:
         logging.debug("While loop entered.")
@@ -97,8 +105,9 @@ def generate_image_data(batch_size: int,
         image_location: str
         mask_location: str
         for image_location, mask_location in image_mask_location:
-            image: np.ndarray = cv2.imread(image_location)
-            mask: np.ndarray = load_output_image(mask_location)
+            image: np.ndarray
+            mask: np.ndarray
+            image, mask = cached_read_image_mask(image_location, mask_location)
 
             if number_of_loops > 0:
                 logging.info("Rotating data")
