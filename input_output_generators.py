@@ -1,13 +1,15 @@
 import cv2
 import numpy as np
 import logging
-from typing import List, Tuple, Union, Generator
+from typing import List, Tuple, Union, Generator, Optional
 from random import shuffle, uniform
 from pathlib import Path
 from scipy import ndimage
 from functools import lru_cache
 
-OUTPUT_DIRECTORY_LOCATION: str = r'E:\Downloads\fish_conservation\segmentation\train'
+SEGMENTATION_DIRECTORY_LOCATION: str = r'E:\Downloads\fish_conservation\segmentation'
+# Set this to where you want the images saved
+OUTPUT_DIRECTORY_LOCATION: str = r'E:\Downloads\fish_conservation\segmentation\output\\'
 
 
 def load_output_image(location: str) -> np.ndarray:
@@ -49,6 +51,13 @@ def rotate(image: np.ndarray, mask: np.ndarray, deg_range: int) -> Tuple[np.ndar
 
 @lru_cache(maxsize=None)
 def cached_read_image_mask(image_location: str, mask_location: str) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    A cached function to read both the image and the mask
+    :param image_location: The location to load the image
+    :param mask_location:  The location to load the corresponding mask
+    :return: the image and the mask in that order
+    """
+    logging.debug("Requesting {}, and {}".format(image_location, mask_location))
     image: np.ndarray = cv2.imread(image_location)
     mask: np.ndarray = load_output_image(mask_location)
     return image, mask
@@ -56,9 +65,10 @@ def cached_read_image_mask(image_location: str, mask_location: str) -> Tuple[np.
 
 def generate_image_data(batch_size: int,
                         location: str,
-                        number_of_images: Union[int, None] = None,
-                        starting_with: Union[str, None] = None,
-                        deg_range: Union[int, None] = None):
+                        number_of_images: Optional[int] = None,
+                        starting_with: Optional[str] = None,
+                        deg_range: Optional[int] = None,
+                        save_transformed_images: Optional[bool] = False):
     """
     Generates image data for a fit_generator method of Keras.
     :param deg_range: The range degrees the images can be rotated within randomly
@@ -95,7 +105,7 @@ def generate_image_data(batch_size: int,
 
         # Shuffle the two image lists together.
         # Stops the order from being memorized.
-        logging.info("Shuffling data")
+        logging.debug("Shuffling data")
         shuffle(image_mask_location)
 
         # Marks the next image container that will be written over.
@@ -104,19 +114,28 @@ def generate_image_data(batch_size: int,
         # Take each of these place them into a batch and yield them
         image_location: str
         mask_location: str
+        number_of_images_processed: int = 0
         for image_location, mask_location in image_mask_location:
+
+            # Read the image and mask in
             image: np.ndarray
             mask: np.ndarray
             image, mask = cached_read_image_mask(image_location, mask_location)
 
+            # Only performs transformations after the first loop
             if number_of_loops > 0:
-                logging.info("Rotating data")
+                logging.debug("Rotating data")
                 image, mask = rotate(image, mask, deg_range)
+                if save_transformed_images:
+                    # Save the images
+                    save_image(image, number_of_images_processed)
+                    save_image(mask, number_of_images_processed, mask=True)
+                    number_of_images_processed += 1
 
             mask: np.ndarray = scale_mask(mask)
-
             batch_images[placeholder, :, :, :] = image
             batch_masks[placeholder, :, :, :] = mask
+
 
             placeholder += 1
             logging.debug(f"placeholder: {placeholder}")
@@ -127,7 +146,7 @@ def generate_image_data(batch_size: int,
 
         # This is to handle the final batch that could be shorter than the others
         if placeholder > 0:
-            logging.info("A final small batch is being created.")
+            logging.debug("A final small batch is being created.")
 
             batch_images_small: np.ndarray = batch_images[0:placeholder, :, :, :]
             batch_masks_small: np.ndarray = batch_masks[0:placeholder, :, :, :]
@@ -177,15 +196,38 @@ def get_images_list(location_to_train: str, starting_with: Union[str, None]) -> 
             logging.debug("Matching mask found: " + file_or_directory.name)
             mask_locations.append(str(mask_location.joinpath(file_or_directory.name).resolve()))
             image_locations.append(str(image_location.joinpath(file_or_directory.name).resolve()))
-            logging.info("A matching mask was found for file: " + file_or_directory.name)
+            logging.debug("A matching mask was found for file: " + file_or_directory.name)
         else:
-            logging.info("A matching mask was not found for file: " + file_or_directory.name)
+            logging.debug("A matching mask was not found for file: " + file_or_directory.name)
     return image_locations, mask_locations
 
 
+def save_image(image: np.ndarray, number, mask: Optional[bool] = False) -> None:
+    image_out: np.ndarray
+    name: str
+    if mask:
+        image_out = image * 255.0
+        name = f"{number}_mask.png"
+    else:
+        image_out = image
+        name = f"{number}.png"
+
+    cv2.imwrite(OUTPUT_DIRECTORY_LOCATION + name, image_out)
+
+
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO, format='%(name)s - %(levelname)s - %(message)s')
-    for image, mask in generate_image_data(10, OUTPUT_DIRECTORY_LOCATION, deg_range=5):
-        assert image.shape == (10, 768, 768, 3), f"{str(image.shape)}"
-        assert mask.shape == (10, 768, 768, 1)
-        logging.warning("Completed loop")
+    logging.basicConfig(level=logging.DEBUG, format='%(name)s - %(levelname)s - %(message)s')
+    loop = 0
+    for image_batch, mask_batch in generate_image_data(10, SEGMENTATION_DIRECTORY_LOCATION + "\\train", deg_range=180):
+        # assert image_batch.shape == (10, 768, 768, 3), f"{str(image.shape)}"
+        # assert mask.shape == (10, 768, 768, 1)
+
+        # Using a warning to take note of it.
+        logging.info("Completed loop")
+
+        for i in range(image_batch.shape[0]):
+            save_image(image_batch[i], i + loop)
+            save_image(mask_batch[i], i + loop, mask=True)
+        loop +=1
+        # Save the image
+        # save_image(image_batch[0])

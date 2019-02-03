@@ -5,13 +5,12 @@ from keras import Model
 from keras import layers as layers
 from keras.losses import binary_crossentropy
 from keras.optimizers import Adam
-from input_output_generators import generate_image_data, OUTPUT_DIRECTORY_LOCATION
-from math import ceil
+from input_output_generators import generate_image_data, SEGMENTATION_DIRECTORY_LOCATION, save_image
 import logging
+import numpy as np
 
 BATCH_SIZE: int = 2
 IMAGE_SIZE: List[int] = [768, 768, 3]
-
 
 
 def add_downsample_layer(layer: keras.layers.Layer, filters: int):
@@ -62,7 +61,7 @@ def add_expansive_layer(input_layer, filters_to_end_with: int,
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(name)s - %(levelname)s - %(message)s')
     INITIAL_SIZE = 64
-    input_tensor:layers.Layer = layers.Input(shape=IMAGE_SIZE, name="Input_tensor")
+    input_tensor: layers.Layer = layers.Input(shape=IMAGE_SIZE, name="Input_tensor")
 
     print("")
     print("Going down the U-net:...")
@@ -72,7 +71,7 @@ if __name__ == '__main__':
     print("layer 1 downsampled:", keras.backend.int_shape(layer_1_downsampled))
     print("layer 1: ", keras.backend.int_shape(layer_1))
 
-    layer_2_downsampled, layer_2 = add_downsample_layer(layer_1_downsampled, INITIAL_SIZE*2)
+    layer_2_downsampled, layer_2 = add_downsample_layer(layer_1_downsampled, INITIAL_SIZE * 2)
     layer_2_downsampled_norm = layers.BatchNormalization()(layer_2_downsampled)
     print("layer 2 downsampled:", keras.backend.int_shape(layer_2_downsampled))
     print("layer 2: ", keras.backend.int_shape(layer_2))
@@ -87,25 +86,53 @@ if __name__ == '__main__':
     print("layer 4 downsampled:", keras.backend.int_shape(layer_4_downsampled))
     print("layer 4: ", keras.backend.int_shape(layer_4))
 
-    layer_5 = layers.Conv2D(INITIAL_SIZE*16, (3, 3), padding="same")(layer_4_downsampled_norm)
+    layer_5 = layers.Conv2D(INITIAL_SIZE * 16, (3, 3), padding="same")(layer_4_downsampled_norm)
     layer_5_norm = layers.BatchNormalization()(layer_5)
     print("layer 5 norm", keras.backend.int_shape(layer_5_norm))
 
     print()
     print("Going back up the U-net")
     layer_6_upsampled = add_expansive_layer(layer_5_norm, INITIAL_SIZE * 8, layer_4)
-    layer_7_upsampled = add_expansive_layer(layer_6_upsampled, INITIAL_SIZE*4, layer_3)
-    layer_8_upsampled = add_expansive_layer(layer_7_upsampled, INITIAL_SIZE*2, layer_2)
+    layer_7_upsampled = add_expansive_layer(layer_6_upsampled, INITIAL_SIZE * 4, layer_3)
+    layer_8_upsampled = add_expansive_layer(layer_7_upsampled, INITIAL_SIZE * 2, layer_2)
     layer_9_upsampled = add_expansive_layer(layer_8_upsampled, INITIAL_SIZE, layer_1)
 
+    # activation softmax has higher loss but lower val_loss
     output_layer = layers.Conv2D(1, (1, 1), activation="sigmoid", padding="same")(layer_9_upsampled)
 
     model: Model = Model(inputs=[input_tensor], outputs=[output_layer])
     model.summary()
 
-    optimizer = Adam(lr=0.01)
+    optimizer = Adam(lr=0.001)
     model.compile(optimizer=optimizer, loss=binary_crossentropy)
 
-    model.fit_generator(generate_image_data(BATCH_SIZE, OUTPUT_DIRECTORY_LOCATION, 6, "ALB_img_0*"),
-                        steps_per_epoch=ceil(6/BATCH_SIZE), epochs=100)
+    # TODO: Add validation data and histogram=x where x > 0
+    tensorboard_callback = keras.callbacks.TensorBoard(
+        log_dir=r'./logs',
+        batch_size=1,
+        histogram_freq=0,
+        write_graph=True,
+        write_images=False,
+        update_freq='batch')
 
+    reduce_learning_rate_callback = keras.callbacks.ReduceLROnPlateau(patience=3,
+                                                                      mode="min")
+
+    validation_generator = generate_image_data(50, SEGMENTATION_DIRECTORY_LOCATION + "\\validation")
+
+    validation_data = next(validation_generator)
+    EPOCHS = 10
+    NUMBER_OF_TRAINING_IMAGES = 137
+    model.fit_generator(generate_image_data(BATCH_SIZE, SEGMENTATION_DIRECTORY_LOCATION + "\\train", deg_range=180,
+                                            save_transformed_images=False),
+                        steps_per_epoch=58,
+                        epochs=EPOCHS,
+                        callbacks=[tensorboard_callback, reduce_learning_rate_callback],
+                        validation_data=validation_data)
+
+    model.save(f"Fish_unet_{EPOCHS}_{NUMBER_OF_TRAINING_IMAGES}.cnn",
+               overwrite=True,
+               include_optimizer=True)
+    prediction: np.ndarray = model.predict(np.reshape(validation_data[0][0], (1, 768, 768, 3)))
+
+    save_image(prediction[0], 1, mask=True)
