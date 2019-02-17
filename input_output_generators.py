@@ -70,19 +70,23 @@ def generate_image_data(batch_size: int,
                         deg_range: Optional[int] = None,
                         save_transformed_images: Optional[bool] = False):
     """
-    Generates image data for a fit_generator method of Keras.
+    Generates image data for a fit_generator method of Keras. This is the main function of this module.
     :param deg_range: The range degrees the images can be rotated within randomly
     :param batch_size: The number of images to include in a single batch.
     :param number_of_images: This will allow you to select how many of the images to loop on.
     :param location: The location of the test folder to use, this must have Mask and Fish folders inside.
     :param starting_with: The string the images are expected to start with.
+    :param save_transformed_images: Determines whether the transformed images will be saved to a
+    separate folder.
     :return: The images currently
     """
 
     batch_images: np.ndarray = np.zeros((batch_size, 768, 768, 3))
     batch_masks: np.ndarray = np.zeros((batch_size, 768, 768, 1))
 
+    # noinspection PyUnusedLocal
     list_of_image_locations: List[str]
+    # noinspection PyUnusedLocal
     list_of_mask_locations: List[str]
     list_of_image_locations, list_of_mask_locations = get_images_list(location, starting_with)
 
@@ -112,13 +116,17 @@ def generate_image_data(batch_size: int,
         placeholder: int = 0
 
         # Take each of these place them into a batch and yield them
+        # noinspection PyUnusedLocal
         image_location: str
+        # noinspection PyUnusedLocal
         mask_location: str
         number_of_images_processed: int = 0
         for image_location, mask_location in image_mask_location:
 
             # Read the image and mask in
+            # noinspection PyUnusedLocal
             image: np.ndarray
+            # noinspection PyUnusedLocal
             mask: np.ndarray
             image, mask = cached_read_image_mask(image_location, mask_location)
 
@@ -135,7 +143,6 @@ def generate_image_data(batch_size: int,
             mask: np.ndarray = scale_mask(mask)
             batch_images[placeholder, :, :, :] = image
             batch_masks[placeholder, :, :, :] = mask
-
 
             placeholder += 1
             logging.debug(f"placeholder: {placeholder}")
@@ -154,6 +161,7 @@ def generate_image_data(batch_size: int,
             yield batch_images_small, batch_masks_small
 
             # Reset for the next set of batches
+            # noinspection PyUnusedLocal
             placeholder = 0
         number_of_loops += 1
 
@@ -179,6 +187,7 @@ def get_images_list(location_to_train: str, starting_with: Union[str, None]) -> 
     assert mask_location.exists(), "The 'Mask' folder doesn't exists"
 
     # Check for what to start with
+    # noinspection PyUnusedLocal
     image_location_dir: Generator
     if starting_with is not None:
         image_location_dir = image_location.glob(starting_with)
@@ -186,6 +195,7 @@ def get_images_list(location_to_train: str, starting_with: Union[str, None]) -> 
     else:
         image_location_dir = image_location.iterdir()
 
+    # noinspection PyUnusedLocal
     file_or_directory: Path
     for file_or_directory in image_location_dir:
         if not file_or_directory.is_file():
@@ -203,7 +213,9 @@ def get_images_list(location_to_train: str, starting_with: Union[str, None]) -> 
 
 
 def save_image(image: np.ndarray, number, mask: Optional[bool] = False) -> None:
+    # noinspection PyUnusedLocal
     image_out: np.ndarray
+    # noinspection PyUnusedLocal
     name: str
     if mask:
         image_out = image * 255.0
@@ -228,6 +240,6 @@ if __name__ == '__main__':
         for i in range(image_batch.shape[0]):
             save_image(image_batch[i], i + loop)
             save_image(mask_batch[i], i + loop, mask=True)
-        loop +=1
+        loop += 1
         # Save the image
         # save_image(image_batch[0])
