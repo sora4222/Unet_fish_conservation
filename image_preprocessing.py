@@ -25,7 +25,10 @@ def create_directories(sub_directory_name: PurePath, overwrite=False):
 
 if __name__ == '__main__':
     # Ensure no more accidental use
-    return
+    option = input("This will overwrite the write folders [y]/n")
+    if option.lower() != 'y':
+        exit(0)
+
     assert CHANCE_TEST + CHANCE_VALIDATION < 1.0, \
         "The chance of  a test plus  validation has to be less than 1."
     print(OUTPUT_DIRECTORY_LOCATION)
