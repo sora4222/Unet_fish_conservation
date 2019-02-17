@@ -5,11 +5,13 @@ from typing import List, Tuple, Union, Generator, Optional
 from random import shuffle, uniform
 from pathlib import Path
 from scipy import ndimage
+from skimage.transform import resize
 from functools import lru_cache
 
 SEGMENTATION_DIRECTORY_LOCATION: str = r'E:\Downloads\fish_conservation\segmentation'
 # Set this to where you want the images saved
 OUTPUT_DIRECTORY_LOCATION: str = r'E:\Downloads\fish_conservation\segmentation\output\\'
+IMAGE_OUTPUT_SIZE: Tuple[int, int, int] = (612, 612, 1)
 
 
 def load_output_image(location: str) -> np.ndarray:
@@ -82,7 +84,7 @@ def generate_image_data(batch_size: int,
     """
 
     batch_images: np.ndarray = np.zeros((batch_size, 768, 768, 3))
-    batch_masks: np.ndarray = np.zeros((batch_size, 768, 768, 1))
+    batch_masks: np.ndarray = np.zeros((batch_size, IMAGE_OUTPUT_SIZE[0], IMAGE_OUTPUT_SIZE[1], 1))
 
     # noinspection PyUnusedLocal
     list_of_image_locations: List[str]
@@ -142,7 +144,10 @@ def generate_image_data(batch_size: int,
 
             mask: np.ndarray = scale_mask(mask)
             batch_images[placeholder, :, :, :] = image
-            batch_masks[placeholder, :, :, :] = mask
+            batch_masks[placeholder, :, :, :] = resize(mask,
+                                                       output_shape=IMAGE_OUTPUT_SIZE,
+                                                       mode="reflect",
+                                                       anti_aliasing=True)  # TODO: Need to tune this
 
             placeholder += 1
             logging.debug(f"placeholder: {placeholder}")
@@ -156,7 +161,7 @@ def generate_image_data(batch_size: int,
             logging.debug("A final small batch is being created.")
 
             batch_images_small: np.ndarray = batch_images[0:placeholder, :, :, :]
-            batch_masks_small: np.ndarray = batch_masks[0:placeholder, :, :, :]
+            batch_masks_small: np.ndarray = batch_masks[0:placeholder, :, :, :]  # TODO: Also here
 
             yield batch_images_small, batch_masks_small
 
