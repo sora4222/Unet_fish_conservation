@@ -58,7 +58,7 @@ def add_expansive_layer(input_layer, filters_to_end_with: int,
     crop_dimensions: Tuple[Tuple[int], Tuple[int]] = get_crop_dimensions(to_crop=jump_connections,
                                                                          layer_to_crop_to=upsample_layer)
     crop_layer = layers.Cropping2D(cropping=crop_dimensions)(jump_connections)
-    concatenation_layer = layers.concatenate([upsample_layer, crop_layer])
+    concatenation_layer = layers.concatenate([upsample_layer, crop_layer], axis=3)
     logging.debug(f"Come out of concat with: {keras.backend.int_shape(concatenation_layer)}")
     cnn_layer_1 = layers.Conv2D(filters=filters_to_end_with // 2,
                                 kernel_size=(3, 3),
