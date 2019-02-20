@@ -2,6 +2,8 @@ import random
 from pathlib import PurePath, Path
 import cv2
 import shutil
+import numpy as np
+from typing import List
 
 # Set these for the output and input directory
 OUTPUT_DIRECTORY_LOCATION: str = r'E:\Downloads\fish_conservation\segmentation'
@@ -9,6 +11,7 @@ INPUT_DIRECTORY_LOCATION: str = r'E:\Downloads\fish_conservation\train'
 
 CHANCE_TEST: float = 0.73
 CHANCE_VALIDATION: float = 0.20
+
 
 
 SHOULD_OVERWRITE: bool = True

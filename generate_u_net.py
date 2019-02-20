@@ -9,7 +9,8 @@ from model.utils.crop_functions import get_crop_dimensions
 
 BATCH_SIZE: int = 2
 IMAGE_SIZE: List[int] = [768, 768, 3]
-PADDING: str = "VALID"
+PADDING: str = "same"
+NUM_CLASSES: int = 1
 
 
 def add_downsample_layer(layer: keras.layers.Layer, filters: int):
@@ -57,6 +58,7 @@ def add_expansive_layer(input_layer, filters_to_end_with: int,
 
     crop_dimensions: Tuple[Tuple[int], Tuple[int]] = get_crop_dimensions(to_crop=jump_connections,
                                                                          layer_to_crop_to=upsample_layer)
+    logging.info(f"cropping dimensions: {crop_dimensions}")
     crop_layer = layers.Cropping2D(cropping=crop_dimensions)(jump_connections)
     concatenation_layer = layers.concatenate([upsample_layer, crop_layer])
     logging.debug(f"Come out of concat with: {keras.backend.int_shape(concatenation_layer)}")
@@ -131,14 +133,18 @@ if __name__ == '__main__':
     layer_8_upsampled = add_expansive_layer(layer_7_upsampled, INITIAL_SIZE * 2, layer_2)
     layer_9_upsampled = add_expansive_layer(layer_8_upsampled, INITIAL_SIZE, layer_1)
 
-    # activation softmax has higher loss but lower val_loss
-    output_layer = layers.Conv2D(1, (1, 1), activation="sigmoid", padding=PADDING)(layer_9_upsampled)
+    ch, cw = get_crop_dimensions(input_tensor, layer_9_upsampled)
+    layer_10 = layers.Conv2D(2, (3,3), padding=PADDING)
+    layer_11_padding = layers.ZeroPadding2D(padding=(ch, cw))(layer_9_upsampled)
+    layer_11_conv = layers.Conv2D(NUM_CLASSES, (1, 1))(layer_11_padding)
 
-    model: keras.Model = keras.Model(inputs=[input_tensor], outputs=[output_layer])
+    model: keras.Model = keras.Model(inputs=[input_tensor], outputs=[layer_11_conv])
     model.summary()
 
-    optimizer = keras.optimizers.Adam(lr=0.001)
-    model.compile(optimizer=optimizer, loss=keras.losses.binary_crossentropy)
+    logging.debug(f"Model {model.output.get_shape()}")
+
+    optimizer = keras.optimizers.Adam(lr=0.01)
+    model.compile(optimizer=optimizer, loss=keras.losses.sparse_categorical_crossentropy)
 
     # TODO: Add validation data and histogram=x where x > 0
     tensorboard_callback = keras.callbacks.TensorBoard(
@@ -151,21 +157,23 @@ if __name__ == '__main__':
     reduce_learning_rate_callback = keras.callbacks.ReduceLROnPlateau(patience=3,
                                                                       mode="min")
 
-    validation_generator = generate_image_data(50, SEGMENTATION_DIRECTORY_LOCATION + "\\validation")
+    validation_generator = generate_image_data(50, SEGMENTATION_DIRECTORY_LOCATION + "\\train")
 
     validation_data = next(validation_generator)
-    EPOCHS = 10
+    EPOCHS = 20
     NUMBER_OF_TRAINING_IMAGES = 137
-    model.fit_generator(generate_image_data(BATCH_SIZE, SEGMENTATION_DIRECTORY_LOCATION + "\\train", deg_range=180,
-                                            save_transformed_images=False),
-                        steps_per_epoch=58,
-                        epochs=EPOCHS,
-                        callbacks=[tensorboard_callback, reduce_learning_rate_callback],
-                        validation_data=validation_data)
+    model.fit_generator(
+        generate_image_data(BATCH_SIZE,
+                            SEGMENTATION_DIRECTORY_LOCATION + "\\train",
+                            deg_range=180,
+                            save_transformed_images=False),
+        steps_per_epoch=58,
+        epochs=EPOCHS,
+        callbacks=[tensorboard_callback, reduce_learning_rate_callback],
+        validation_data=validation_data)
 
     model.save(f"Fish_unet_{EPOCHS}_{NUMBER_OF_TRAINING_IMAGES}.cnn",
-               overwrite=True,
-               include_optimizer=True)
+               overwrite=True)
     prediction: np.ndarray = model.predict(np.reshape(validation_data[0][0], (1, 768, 768, 3)))
 
     save_image(prediction[0], 1, mask=True)

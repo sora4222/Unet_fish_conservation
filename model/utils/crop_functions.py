@@ -1,6 +1,6 @@
 import keras as K
 import tensorflow as tf
-from typing import Tuple
+from typing import Tuple, Union
 import logging
 
 def correct_dimension(dimension_size: int) -> Tuple[int, int]:
@@ -18,7 +18,8 @@ def correct_dimension(dimension_size: int) -> Tuple[int, int]:
         return int(dimension_size / 2), int(dimension_size / 2)
 
 
-def get_crop_dimensions(to_crop: tf.Tensor, layer_to_crop_to: tf.Tensor) -> Tuple[Tuple[int, int], Tuple[int, int]]:
+def get_crop_dimensions(to_crop: Union[tf.Tensor, tf.layers.Layer],
+                        layer_to_crop_to: Union[tf.Tensor, tf.layers.Layer]) -> Tuple[Tuple[int, int], Tuple[int, int]]:
     """
     Obtained from
     https://github.com/zizhaozhang/unet-tensorflow-keras/blob/master/model.py

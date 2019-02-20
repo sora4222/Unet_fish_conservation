@@ -11,7 +11,12 @@ from functools import lru_cache
 SEGMENTATION_DIRECTORY_LOCATION: str = r'E:\Downloads\fish_conservation\segmentation'
 # Set this to where you want the images saved
 OUTPUT_DIRECTORY_LOCATION: str = r'E:\Downloads\fish_conservation\segmentation\output\\'
-IMAGE_OUTPUT_SIZE: Tuple[int, int, int] = (612, 612, 1)
+IMAGE_OUTPUT_SIZE: Tuple[int, int, int] = (768, 768, 1)
+
+# The classes to classify things as.
+Fish: List[int] = [255, 255, 255]
+
+COLOR_DICT: np.ndarray = np.array([Fish])
 
 
 def load_output_image(location: str) -> np.ndarray:
@@ -21,6 +26,8 @@ def load_output_image(location: str) -> np.ndarray:
     :param location: The absolute path to the image
     :return:
     """
+    logging.debug(f"{__name__}: load_output_image")
+    logging.debug(f"image location ")
     image = cv2.imread(location)
     logging.debug(f"image shape: {image.shape}")
 
@@ -28,10 +35,6 @@ def load_output_image(location: str) -> np.ndarray:
     image_converted: np.ndarray = np.reshape(image_converted, (image_converted.shape[0], image_converted.shape[1], 1))
     logging.debug(f"image converted: {image_converted.shape}")
     return image_converted
-
-
-def scale_mask(mask: np.ndarray) -> np.ndarray:
-    return (mask > 30).astype(int)
 
 
 def rotate(image: np.ndarray, mask: np.ndarray, deg_range: int) -> Tuple[np.ndarray, np.ndarray]:
@@ -68,7 +71,7 @@ def cached_read_image_mask(image_location: str, mask_location: str) -> Tuple[np.
 def generate_image_data(batch_size: int,
                         location: str,
                         number_of_images: Optional[int] = None,
-                        starting_with: Optional[str] = None,
+                        glob_pattern: Optional[str] = None,
                         deg_range: Optional[int] = None,
                         save_transformed_images: Optional[bool] = False):
     """
@@ -77,20 +80,20 @@ def generate_image_data(batch_size: int,
     :param batch_size: The number of images to include in a single batch.
     :param number_of_images: This will allow you to select how many of the images to loop on.
     :param location: The location of the test folder to use, this must have Mask and Fish folders inside.
-    :param starting_with: The string the images are expected to start with.
+    :param glob_pattern: A pattern using the common linux glob pattern.
     :param save_transformed_images: Determines whether the transformed images will be saved to a
     separate folder.
     :return: The images currently
     """
 
-    batch_images: np.ndarray = np.zeros((batch_size, 768, 768, 3))
-    batch_masks: np.ndarray = np.zeros((batch_size, IMAGE_OUTPUT_SIZE[0], IMAGE_OUTPUT_SIZE[1], 1))
+    batch_images: np.ndarray = np.zeros((batch_size, IMAGE_OUTPUT_SIZE[0], IMAGE_OUTPUT_SIZE[1], 3))
+    batch_masks: np.ndarray = np.zeros((batch_size, IMAGE_OUTPUT_SIZE[0], IMAGE_OUTPUT_SIZE[1], 1)) # TODO: Update this to use one-hot encoding
 
     # noinspection PyUnusedLocal
     list_of_image_locations: List[str]
     # noinspection PyUnusedLocal
     list_of_mask_locations: List[str]
-    list_of_image_locations, list_of_mask_locations = get_images_list(location, starting_with)
+    list_of_image_locations, list_of_mask_locations = get_images_list(location, glob_pattern)
 
     if number_of_images is not None:
         assert len(list_of_image_locations) >= number_of_images, "The number of images  needs " \
@@ -142,7 +145,7 @@ def generate_image_data(batch_size: int,
                     save_image(mask, number_of_images_processed, mask=True)
                     number_of_images_processed += 1
 
-            mask: np.ndarray = scale_mask(mask)
+            # mask: np.ndarray = scale_mask(mask)
             batch_images[placeholder, :, :, :] = image
             batch_masks[placeholder, :, :, :] = resize(mask,
                                                        output_shape=IMAGE_OUTPUT_SIZE,
@@ -171,11 +174,11 @@ def generate_image_data(batch_size: int,
         number_of_loops += 1
 
 
-def get_images_list(location_to_train: str, starting_with: Union[str, None]) -> Tuple[List[str], List[str]]:
+def get_images_list(location_to_train: str, glob_pattern: Union[str, None]) -> Tuple[List[str], List[str]]:
     """
     Walks through the image and mask folders to obtain two lists of masks and images.
     :param location_to_train:
-    :param starting_with:
+    :param glob_pattern:
     :return:
     """
     logging.debug("get_images_list ")
@@ -194,8 +197,8 @@ def get_images_list(location_to_train: str, starting_with: Union[str, None]) -> 
     # Check for what to start with
     # noinspection PyUnusedLocal
     image_location_dir: Generator
-    if starting_with is not None:
-        image_location_dir = image_location.glob(starting_with)
+    if glob_pattern is not None:
+        image_location_dir = image_location.glob(glob_pattern)
         assert image_location_dir is not None, "The image_location_dir with glob results in None"
     else:
         image_location_dir = image_location.iterdir()
@@ -223,13 +226,15 @@ def save_image(image: np.ndarray, number, mask: Optional[bool] = False) -> None:
     # noinspection PyUnusedLocal
     name: str
     if mask:
-        image_out = image * 255.0
         name = f"{number}_mask.png"
     else:
         image_out = image
         name = f"{number}.png"
 
+    logging.debug(f"image numbers to save: \n{image_out}")
+
     cv2.imwrite(OUTPUT_DIRECTORY_LOCATION + name, image_out)
+    logging.info(f"Wrote image to {OUTPUT_DIRECTORY_LOCATION + name}")
 
 
 if __name__ == '__main__':
