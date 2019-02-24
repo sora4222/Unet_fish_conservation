@@ -1,6 +1,6 @@
 from tensorflow.python import keras
 import numpy as np
-from input_output_generators import generate_image_data, SEGMENTATION_DIRECTORY_LOCATION, save_image
+from image_genarators.input_output_generators import generate_image_data, SEGMENTATION_DIRECTORY_LOCATION, save_image
 import logging
 np.set_printoptions(threshold=np.nan)
 if __name__ == '__main__':

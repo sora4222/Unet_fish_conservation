@@ -2,7 +2,7 @@ from typing import List, Tuple
 
 from tensorflow.python import keras
 from tensorflow.python.keras import layers
-from input_output_generators import generate_image_data, SEGMENTATION_DIRECTORY_LOCATION, save_image
+from image_genarators.input_output_generators import generate_image_data, SEGMENTATION_DIRECTORY_LOCATION, save_image
 import logging
 import numpy as np
 from model.utils.crop_functions import get_crop_dimensions
@@ -134,7 +134,7 @@ if __name__ == '__main__':
     layer_9_upsampled = add_expansive_layer(layer_8_upsampled, INITIAL_SIZE, layer_1)
 
     ch, cw = get_crop_dimensions(input_tensor, layer_9_upsampled)
-    layer_10 = layers.Conv2D(2, (3,3), padding=PADDING)
+    layer_10 = layers.Conv2D(2, (3, 3), padding=PADDING)
     layer_11_padding = layers.ZeroPadding2D(padding=(ch, cw))(layer_9_upsampled)
     layer_11_conv = layers.Conv2D(NUM_CLASSES, (1, 1))(layer_11_padding)
 
