@@ -13,12 +13,12 @@ PADDING: str = "same"
 NUM_CLASSES: int = 1
 
 
-def add_downsample_layer(layer: keras.layers.Layer, filters: int):
+def add_down_sample_layer(layer: keras.layers.Layer, filters: int):
     """
-    Adds a downsample set of Convolutional2D layers.
-    :param model:
+    Adds a down sample set of Convolutional2D layers.
+    :param layer:
     :param filters:
-    :return: the downsampled layer, the conv2d layer just before
+    :return: the down sampled layer, the conv2d layer just before
     """
     # padding "valid" means no padding
     cnn_layer_1 = layers.Conv2D(filters,
@@ -27,7 +27,7 @@ def add_downsample_layer(layer: keras.layers.Layer, filters: int):
                                 padding=PADDING,
                                 activation="relu",
                                 data_format="channels_last")(layer)
-    logging.debug(f"add_downsample_layer: cnn_layer_1 shape: {cnn_layer_1.get_shape()}")
+    logging.debug(f"add_down-sample_layer: cnn_layer_1 shape: {cnn_layer_1.get_shape()}")
     cnn_layer_1_norm = layers.BatchNormalization()(cnn_layer_1)
     cnn_layer_2 = layers.Conv2D(filters,
                                 kernel_size=(3, 3),
@@ -35,7 +35,7 @@ def add_downsample_layer(layer: keras.layers.Layer, filters: int):
                                 padding=PADDING,
                                 activation="relu",
                                 data_format="channels_last")(cnn_layer_1_norm)
-    logging.debug(f"add_downsample_layer: cnn_layer_2 shape (skip connection): {cnn_layer_2.get_shape()[2]}")
+    logging.debug(f"add_down-sample_layer: cnn_layer_2 shape (skip connection): {cnn_layer_2.get_shape()[2]}")
     cnn_layer_2_norm = layers.BatchNormalization()(cnn_layer_2)
     sample_down_layer = layers.MaxPool2D(pool_size=(2, 2),
                                          strides=(2, 2),
@@ -54,7 +54,7 @@ def add_expansive_layer(input_layer, filters_to_end_with: int,
                                             padding=PADDING,
                                             data_format="channels_last",
                                             strides=(2, 2))(input_layer)
-    logging.debug(f"add_expansive_layer : Upsample layer shape: {upsample_layer.get_shape()}")
+    logging.debug(f"add_expansive_layer : Up-sample layer shape: {upsample_layer.get_shape()}")
 
     crop_dimensions: Tuple[Tuple[int], Tuple[int]] = get_crop_dimensions(to_crop=jump_connections,
                                                                          layer_to_crop_to=upsample_layer)
@@ -93,27 +93,27 @@ if __name__ == '__main__':
     logging.debug("Going down the U-net:...")
 
     input_normal = layers.BatchNormalization()(input_tensor)
-    layer_1_downsampled, layer_1 = add_downsample_layer(input_normal, INITIAL_SIZE)
+    layer_1_downsampled, layer_1 = add_down_sample_layer(input_normal, INITIAL_SIZE)
     logging.debug(f"layer 1 downsampled: {keras.backend.int_shape(layer_1_downsampled)}")
     logging.debug(f"layer 1: {keras.backend.int_shape(layer_1)}")
     log_shape("layer_1_downsampled", layer_1_downsampled)
     log_shape("layer_1", layer_1)
 
-    layer_2_downsampled, layer_2 = add_downsample_layer(layer_1_downsampled, INITIAL_SIZE * 2)
+    layer_2_downsampled, layer_2 = add_down_sample_layer(layer_1_downsampled, INITIAL_SIZE * 2)
     layer_2_downsampled_norm = layers.BatchNormalization()(layer_2_downsampled)
     logging.debug(f"layer 2 downsampled: {keras.backend.int_shape(layer_2_downsampled)}")
     logging.debug(f"layer 2: {keras.backend.int_shape(layer_2)}")
     log_shape("layer_2_downsampled", layer_2_downsampled)
     log_shape("layer_2", layer_2)
 
-    layer_3_downsampled, layer_3 = add_downsample_layer(layer_2_downsampled_norm, INITIAL_SIZE * 4)
+    layer_3_downsampled, layer_3 = add_down_sample_layer(layer_2_downsampled_norm, INITIAL_SIZE * 4)
     layer_3_downsampled_norm = layers.BatchNormalization()(layer_3_downsampled)
     logging.debug(f"layer 3 downsampled: {keras.backend.int_shape(layer_3_downsampled)}")
     logging.debug(f"layer 3: {keras.backend.int_shape(layer_3)}")
     log_shape("layer_3_downsampled", layer_3_downsampled)
     log_shape("layer_3", layer_3)
 
-    layer_4_downsampled, layer_4 = add_downsample_layer(layer_3_downsampled_norm, INITIAL_SIZE * 8)
+    layer_4_downsampled, layer_4 = add_down_sample_layer(layer_3_downsampled_norm, INITIAL_SIZE * 8)
     layer_4_downsampled_norm = layers.BatchNormalization()(layer_4_downsampled)
     logging.debug(f"layer 4 downsampled: {keras.backend.int_shape(layer_4_downsampled)}")
     logging.debug(f"layer 4: {keras.backend.int_shape(layer_4)}")
