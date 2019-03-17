@@ -3,6 +3,7 @@ import tensorflow as tf
 from typing import Tuple, Union
 import logging
 
+
 def correct_dimension(dimension_size: int) -> Tuple[int, int]:
     """
     Corrects the dimensions for an image that has an odd height or width

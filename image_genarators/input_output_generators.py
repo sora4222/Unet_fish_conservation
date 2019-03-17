@@ -15,14 +15,12 @@ IMAGE_OUTPUT_SIZE: Tuple[int, int, int] = (768, 768, 3)
 
 def generate_image_data(batch_size: int,
                         location: str,
-                        num_classes: int,
                         number_of_images: Optional[int] = None,
                         glob_pattern: Optional[str] = None,
                         deg_range: Optional[int] = None,
                         save_transformed_images: Optional[bool] = False):
     """
     Generates image data for a fit_generator method of Keras. This is the main function of this module.
-    :param num_classes: The number of classes for the mask
     :param deg_range: The range degrees the images can be rotated within randomly
     :param batch_size: The number of images to include in a single batch.
     :param number_of_images: This will allow you to select how many of the images to loop on.
@@ -32,10 +30,10 @@ def generate_image_data(batch_size: int,
     separate folder.
     :return: The images and masks
     """
-
+    if glob_pattern is None:
+        glob_pattern = "*"
     batch_images: np.ndarray = np.zeros((batch_size, IMAGE_OUTPUT_SIZE[0], IMAGE_OUTPUT_SIZE[1], 3))
-    batch_masks: np.ndarray = np.zeros((batch_size, IMAGE_OUTPUT_SIZE[0] * IMAGE_OUTPUT_SIZE[1],
-                                        num_classes))  # TODO: Update this to use one-hot encoding
+    batch_masks: np.ndarray = np.zeros((batch_size, IMAGE_OUTPUT_SIZE[0] * IMAGE_OUTPUT_SIZE[1], 1))
 
     # Load in all the image locations that this is going to use as a list of strings
     # noinspection PyUnusedLocal
@@ -100,7 +98,7 @@ def generate_image_data(batch_size: int,
                     number_of_images_processed += 1
 
             batch_images[placeholder, :, :, :] = image
-            batch_masks[placeholder, :, :, :] = mask
+            batch_masks[placeholder, :, :] = mask
 
             placeholder += 1
             logging.debug(f"placeholder: {placeholder}")
@@ -143,9 +141,6 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG, format='%(name)s - %(levelname)s - %(message)s')
     loop = 0
     for image_batch, mask_batch in generate_image_data(10, SEGMENTATION_DIRECTORY_LOCATION + "\\train", deg_range=180):
-        # assert image_batch.shape == (10, 768, 768, 3), f"{str(image.shape)}"
-        # assert mask.shape == (10, 768, 768, 1)
-
         # Using a warning to take note of it.
         logging.info("Completed loop")
 
@@ -153,5 +148,3 @@ if __name__ == '__main__':
             save_image(image_batch[i], i + loop)
             save_image(mask_batch[i], i + loop, mask=True)
         loop += 1
-        # Save the image
-        # save_image(image_batch[0])
