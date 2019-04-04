@@ -59,4 +59,4 @@ def jaccard_distance_loss(y_true, y_pred):
     @author: wassname
     """
     jaccard_dist = jaccard_distance(y_true, y_pred)
-    return -jaccard_dist
+    return 1-jaccard_dist

@@ -143,16 +143,16 @@ def test_jaccard_distance_loss():
     flatten = keras.backend.flatten
     evaluate_tf = keras.backend.eval
     assert evaluate_tf(jaccard_distance_loss(flatten(true_mask),
-                                             flatten(all_zeros))) == approx(0, abs=abs_error)
+                                             flatten(all_zeros))) == approx(1, abs=abs_error)
 
     assert evaluate_tf(jaccard_distance_loss(flatten(true_mask),
-                                             flatten(ones_right_side))) == approx(0, abs=abs_error)
+                                             flatten(ones_right_side))) == approx(1, abs=abs_error)
 
     assert evaluate_tf(jaccard_distance_loss(flatten(true_mask),
-                                             flatten(identity_matrix))) == approx(-1 / 3, abs=abs_error)
+                                             flatten(identity_matrix))) == approx(2 / 3, abs=abs_error)
 
     assert evaluate_tf(jaccard_distance_loss(flatten(true_mask),
-                                             flatten(true_mask))) == approx(-1, abs=abs_error)
+                                             flatten(true_mask))) == approx(0, abs=abs_error)
 
     assert evaluate_tf(jaccard_distance_loss(flatten(true_mask),
-                                             flatten(all_ones))) == approx(-1 / 2, abs=abs_error)
+                                             flatten(all_ones))) == approx(1 / 2, abs=abs_error)
