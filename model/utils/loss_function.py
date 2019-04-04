@@ -3,6 +3,8 @@ from keras import backend as K
 smooth = 1e-12
 
 
+# TODO: attempt closures to remove global variables
+
 def dice_coef(y_true, y_pred):
     """
     This is the dice coefficient intersection over union implementation
@@ -25,7 +27,7 @@ def dice_coef_loss(y_true, y_pred):
     :param y_pred:
     :return:
     """
-    return 1-dice_coef(y_true, y_pred)
+    return 1 - dice_coef(y_true, y_pred)
 
 
 def jaccard_distance(y_true, y_pred):
@@ -41,7 +43,6 @@ def jaccard_distance(y_true, y_pred):
     :return: A floating point number an element of [0, 1]
     """
     intersection = K.sum(K.abs(y_true * y_pred), axis=-1)
-    print(f"intersection size: {K.get_variable_shape(intersection)}")
     sum_ = K.sum(K.abs(y_true) + K.abs(y_pred), axis=-1)
     return (intersection + smooth) / (sum_ - intersection + smooth)
 
@@ -57,4 +58,5 @@ def jaccard_distance_loss(y_true, y_pred):
     @url: https://gist.github.com/wassname/f1452b748efcbeb4cb9b1d059dce6f96
     @author: wassname
     """
-    return (1 - jaccard_distance(y_true, y_pred)) * smooth
+    jaccard_dist = jaccard_distance(y_true, y_pred)
+    return -jaccard_dist
