@@ -1,10 +1,10 @@
+import logging
 from functools import lru_cache
 from pathlib import Path
 from typing import Union, Tuple, List, Generator
 
-import numpy as np
-import logging
 import cv2
+import numpy as np
 
 # The classes to classify things as.
 Fish: List[int] = [255, 255, 255]
@@ -18,11 +18,13 @@ def one_hot_encode(mask_image: np.ndarray) -> np.ndarray:
     :param mask_image: A mask image to use to obtain classes
     :return: An array reshaped to be a column vector
     """
+    logging.debug(f"mask image shape: {mask_image.shape}")
     new_mask: np.ndarray = mask_image[:, :, 0]
 
     # Reshapes into a column vector
     mask_reshaped: np.ndarray = np.reshape(new_mask,
-                                           newshape=(mask_image.shape[0] * mask_image.shape[1], 1))
+                                           newshape=(mask_image.shape[0], mask_image.shape[1], 1))
+    logging.debug(f"mask encoded shape: {mask_reshaped.shape}")
     new_mask = mask_reshaped / 255
 
     # Currently only accounts for one class

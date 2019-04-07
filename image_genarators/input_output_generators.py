@@ -34,7 +34,7 @@ def generate_image_data(batch_size: int,
     if glob_pattern is None:
         glob_pattern = "*"
     batch_images: np.ndarray = np.zeros((batch_size, IMAGE_OUTPUT_SIZE[0], IMAGE_OUTPUT_SIZE[1], 3))
-    batch_masks: np.ndarray = np.zeros((batch_size, IMAGE_OUTPUT_SIZE[0] * IMAGE_OUTPUT_SIZE[1], 1))
+    batch_masks: np.ndarray = np.zeros((batch_size, IMAGE_OUTPUT_SIZE[0], IMAGE_OUTPUT_SIZE[1], 1))
 
     # Load in all the image locations that this is going to use as a list of strings
     # noinspection PyUnusedLocal
@@ -100,7 +100,7 @@ def generate_image_data(batch_size: int,
                     number_of_images_processed += 1
 
             batch_images[placeholder, :, :, :] = image
-            batch_masks[placeholder, :, :] = mask
+            batch_masks[placeholder, :, :, :] = mask
 
             placeholder += 1
             logging.debug(f"placeholder: {placeholder}")

@@ -1,5 +1,6 @@
-from image_genarators.input_output_generators import generate_image_data
 import numpy as np
+
+from image_genarators.input_output_generators import generate_image_data
 
 
 # noinspection PyUnusedLocal
@@ -38,7 +39,7 @@ def test_input_output_generator_batch_size(path_to_images):
     mask: np.ndarray
     for image, mask in generator:
         assert image.shape == (2, 768, 768, 3)
-        assert mask.shape == (2, 768 * 768, 1)
+        assert mask.shape == (2, 768, 768, 1)
         if number_of_runs == max_number_of_runs:
             break
         number_of_runs = number_of_runs + 1
