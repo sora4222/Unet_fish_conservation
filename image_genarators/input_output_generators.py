@@ -1,8 +1,9 @@
+import logging
+from random import shuffle
+from typing import List, Tuple, Optional
+
 import cv2
 import numpy as np
-import logging
-from typing import List, Tuple, Optional
-from random import shuffle
 
 from image_genarators.utils.image_loading import cached_read_image_mask, get_images_list
 from image_genarators.utils.transforms import rotate
@@ -90,7 +91,8 @@ def generate_image_data(batch_size: int,
             # Only performs transformations after the first loop
             if number_of_loops > 0:
                 logging.debug("Transforming data")
-                image, mask = rotate(image, mask, deg_range)
+                if deg_range is not None:
+                    image, mask = rotate(image, mask, deg_range)
                 if save_transformed_images:
                     # Save the images
                     save_image(image, number_of_images_processed)

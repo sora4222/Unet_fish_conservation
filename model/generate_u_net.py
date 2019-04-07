@@ -1,10 +1,11 @@
+import logging
 from typing import List, Tuple
 
+import numpy as np
 from tensorflow.python import keras
 from tensorflow.python.keras import layers
+
 from image_genarators.input_output_generators import generate_image_data, SEGMENTATION_DIRECTORY_LOCATION, save_image
-import logging
-import numpy as np
 from model.utils.crop_functions import get_crop_dimensions
 
 BATCH_SIZE: int = 2
@@ -85,39 +86,48 @@ def log_shape(layer_name: str, layer) -> None:
 
 def unet() -> keras.Model:
     input_tensor: layers.Layer = layers.Input(shape=IMAGE_SIZE, name="Input_tensor")
+
     logging.debug("Going down the U-net:...")
+
     input_normal = layers.BatchNormalization()(input_tensor)
     layer_1_downsampled, layer_1 = add_down_sample_layer(input_normal, INITIAL_SIZE)
     logging.debug(f"layer 1 downsampled: {keras.backend.int_shape(layer_1_downsampled)}")
     logging.debug(f"layer 1: {keras.backend.int_shape(layer_1)}")
     log_shape("layer_1_downsampled", layer_1_downsampled)
     log_shape("layer_1", layer_1)
+
     layer_2_downsampled, layer_2 = add_down_sample_layer(layer_1_downsampled, INITIAL_SIZE * 2)
     layer_2_downsampled_norm = layers.BatchNormalization()(layer_2_downsampled)
     logging.debug(f"layer 2 downsampled: {keras.backend.int_shape(layer_2_downsampled)}")
     logging.debug(f"layer 2: {keras.backend.int_shape(layer_2)}")
     log_shape("layer_2_downsampled", layer_2_downsampled)
     log_shape("layer_2", layer_2)
+
     layer_3_downsampled, layer_3 = add_down_sample_layer(layer_2_downsampled_norm, INITIAL_SIZE * 4)
     layer_3_downsampled_norm = layers.BatchNormalization()(layer_3_downsampled)
     logging.debug(f"layer 3 downsampled: {keras.backend.int_shape(layer_3_downsampled)}")
     logging.debug(f"layer 3: {keras.backend.int_shape(layer_3)}")
     log_shape("layer_3_downsampled", layer_3_downsampled)
     log_shape("layer_3", layer_3)
+
     layer_4_downsampled, layer_4 = add_down_sample_layer(layer_3_downsampled_norm, INITIAL_SIZE * 8)
     layer_4_downsampled_norm = layers.BatchNormalization()(layer_4_downsampled)
     logging.debug(f"layer 4 downsampled: {keras.backend.int_shape(layer_4_downsampled)}")
     logging.debug(f"layer 4: {keras.backend.int_shape(layer_4)}")
     log_shape("layer_4_downsampled", layer_4_downsampled)
     log_shape("layer_4", layer_4)
+
     layer_5 = layers.Conv2D(INITIAL_SIZE * 16, (3, 3), padding=PADDING)(layer_4_downsampled_norm)
     layer_5_norm = layers.BatchNormalization()(layer_5)
     logging.debug(f"layer 5 norm {keras.backend.int_shape(layer_5_norm)}")
     logging.debug("Going back up the U-net")
+
     logging.debug("layer 6")
     layer_6_upsampled = add_expansive_layer(layer_5_norm, INITIAL_SIZE * 8, layer_4)
+
     logging.debug("layer 7")
     layer_7_upsampled = add_expansive_layer(layer_6_upsampled, INITIAL_SIZE * 4, layer_3)
+
     logging.debug("layer 8")
     layer_8_upsampled = add_expansive_layer(layer_7_upsampled, INITIAL_SIZE * 2, layer_2)
     layer_9_upsampled = add_expansive_layer(layer_8_upsampled, INITIAL_SIZE, layer_1)
@@ -155,7 +165,7 @@ if __name__ == '__main__':
     reduce_learning_rate_callback = keras.callbacks.ReduceLROnPlateau(patience=3,
                                                                       mode="min")
 
-    validation_generator = generate_image_data(50, SEGMENTATION_DIRECTORY_LOCATION + "\\train")
+    validation_generator = generate_image_data(50, SEGMENTATION_DIRECTORY_LOCATION + "\\validation")
 
     validation_data = next(validation_generator)
     EPOCHS = 20
