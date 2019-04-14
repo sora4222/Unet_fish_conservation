@@ -6,6 +6,7 @@ from tensorflow.python import keras
 
 from image_genarators.input_output_generators import generate_image_data
 from model.generate_u_net import unet
+from model.utils.loss_function import dice_coef_loss, jaccard_distance_loss
 
 resource_location: pathlib.PurePath = pathlib.PurePath(__file__).parents[1].joinpath("resources")
 logging.basicConfig(filemode="w+", filename="prediction_logs.txt", level=logging.DEBUG,
@@ -17,18 +18,55 @@ def unet_model():
     return unet()
 
 
-# @pytest.mark.skip(reason="Unimplemented.")
-def test_train_on_alb_img_00019(unet_model):
+def test_train_on_alb_img_00019_sparse_crossentropy_compiles_and_runs(unet_model):
     """
-    This will test that the UNET can run on a single image generating
-    I expect that if I give a single image, and many epochs that the
-    mask will be given back perfectly.
+    Checks this will compile and run one of the images through the sparse cross entropy
+    loss function
     """
     model = unet_model
 
-    optimizer = keras.optimizers.Adam(lr=0.01)
-    # model.compile(optimizer=optimizer, loss=jaccard_distance_loss())
+    optimizer = keras.optimizers.Adam(lr=0.001)
     model.compile(optimizer=optimizer, loss=keras.losses.sparse_categorical_crossentropy)
+
+    validation_data = generate_image_data(1,
+                                          str(resource_location.joinpath("images")),
+                                          glob_pattern="ALB_img_00019.tif")
+    EPOCHS = 20
+    model.fit_generator(
+        validation_data,
+        steps_per_epoch=1,
+        epochs=EPOCHS)
+
+
+def test_train_on_alb_img_00019_jaccard_distance_loss_compiles_and_runs(unet_model):
+    """
+    Checks this will compile and run one of the images through the jaccard distance
+    loss function
+    """
+    model = unet_model
+
+    optimizer = keras.optimizers.Adam(lr=0.001)
+    model.compile(optimizer=optimizer, loss=jaccard_distance_loss())
+
+    validation_data = generate_image_data(1,
+                                          str(resource_location.joinpath("images")),
+                                          glob_pattern="ALB_img_00019.tif")
+    EPOCHS = 20
+    model.fit_generator(
+        validation_data,
+        steps_per_epoch=1,
+        epochs=EPOCHS)
+
+
+def test_train_on_alb_img_00019_dice_coef_loss_compiles_and_runs(unet_model):
+    """
+    Checks this will compile and run one of the images through the sparse cross entropy
+    loss function
+    """
+    model = unet_model
+
+    optimizer = keras.optimizers.Adam(lr=0.001)
+    model.compile(optimizer=optimizer, loss=dice_coef_loss())
 
     validation_data = generate_image_data(1,
                                           str(resource_location.joinpath("images")),

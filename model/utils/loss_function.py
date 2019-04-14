@@ -1,5 +1,5 @@
 import logging
-from typing import Union
+from typing import Union, Optional
 
 from keras import backend as K
 
@@ -24,7 +24,8 @@ def dice_coef(smooth):
     return dice_coef_internal
 
 
-def dice_coef_loss(smooth, smooth_internal):
+def dice_coef_loss(smooth: Optional[Union[float, int]] = 1,
+                   smooth_internal: Optional[Union[float, int]] = 1e-10):
     logging.info(f"smooth constant: {smooth}")
     logging.info(f"smooth_internal constant: {smooth_internal}")
 
@@ -65,14 +66,15 @@ def jaccard_distance(smooth):
     return jaccard_distance_internal
 
 
-def jaccard_distance_loss(smooth: Union[int, float] = 1, smooth_internal: Union[int, float] = 1e-12):
+def jaccard_distance_loss(smooth: Union[int, float] = 1,
+                          smooth_internal: Union[int, float] = 1e-12):
     logging.info(f"smooth variable {smooth}, smooth internal {smooth_internal}")
 
     def jaccard_distance_loss_internal(y_true, y_pred):
         """
 
-        This has been shifted so it converges on 0 and is smoothed to avoid exploding or disapearing
-        gradient.
+        This has been shifted so it converges on 0 and is smoothed to avoid exploding or
+        disappearing gradient.
 
         Ref: https://en.wikipedia.org/wiki/Jaccard_index
 

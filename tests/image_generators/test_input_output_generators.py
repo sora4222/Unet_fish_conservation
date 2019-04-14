@@ -18,7 +18,7 @@ def test_input_output_generators(path_to_images):
     mask: np.ndarray
     for image, mask in generator:
         assert image.shape == (1, 768, 768, 3)
-        assert mask.shape == (1, 768 * 768, 1)
+        assert mask.shape == (1, 768, 768, 1)
         if number_of_runs == max_number_of_runs:
             break
         number_of_runs = number_of_runs + 1
@@ -40,6 +40,32 @@ def test_input_output_generator_batch_size(path_to_images):
     for image, mask in generator:
         assert image.shape == (2, 768, 768, 3)
         assert mask.shape == (2, 768, 768, 1)
+        if number_of_runs == max_number_of_runs:
+            break
+        number_of_runs = number_of_runs + 1
+
+
+def test_half_output_generator_sizes(path_to_images):
+    """
+    Tests that if the last batch is smaller than it's required size the
+    generator will batch the last job correctly.
+    :param path_to_images:
+    :return:
+    """
+    # Generate and test the images
+    generator = generate_image_data(2, str(path_to_images) + "\\", 3, "*")
+    max_number_of_runs = 100
+
+    number_of_runs = 0
+    image: np.ndarray
+    mask: np.ndarray
+    for image, mask in generator:
+        if number_of_runs % 2 == 0:
+            assert image.shape == (2, 768, 768, 3)
+            assert mask.shape == (2, 768, 768, 1)
+        else:
+            assert image.shape == (1, 768, 768, 3)
+            assert mask.shape == (1, 768, 768, 1)
         if number_of_runs == max_number_of_runs:
             break
         number_of_runs = number_of_runs + 1

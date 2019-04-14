@@ -110,33 +110,33 @@ def test_jaccard_distance_loss():
 
     true_mask = keras.backend.variable(
         [
-            [1, 0],
-            [1, 0]
+            [[1], [0]],
+            [[1], [0]]
         ]
     )
 
     all_zeros = keras.backend.variable(
         [
-            [0, 0],
-            [0, 0]
+            [[0], [0]],
+            [[0], [0]]
         ]
     )
     ones_right_side = keras.backend.variable(
         [
-            [0, 1],
-            [0, 1]
+            [[0], [1]],
+            [[0], [1]]
         ]
     )
     identity_matrix = keras.backend.variable(
         [
-            [1, 0],
-            [0, 1]
+            [[1], [0]],
+            [[0], [1]]
         ]
     )
     all_ones = keras.backend.variable(
         [
-            [1, 1],
-            [1, 1]
+            [[1], [1]],
+            [[1], [1]]
         ]
     )
 
