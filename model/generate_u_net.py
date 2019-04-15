@@ -135,7 +135,7 @@ def unet() -> keras.Model:
     final_padding = get_crop_dimensions(input_tensor, layer_9_upsampled)
     layer_10_padding = layers.ZeroPadding2D(padding=final_padding)(layer_9_upsampled)
 
-    layer_10_logits = layers.Conv2D(NUM_CLASSES, (1, 1), activation=None)(layer_10_padding)
+    layer_10_logits = layers.Conv2D(NUM_CLASSES, (1, 1), activation=keras.activations.sigmoid)(layer_10_padding)
 
     model: keras.Model = keras.Model(inputs=[input_tensor], outputs=[layer_10_logits])
     return model
