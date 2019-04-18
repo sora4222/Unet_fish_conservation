@@ -124,19 +124,38 @@ def generate_image_data(batch_size: int,
 
 def save_image(image: np.ndarray, number, mask: Optional[bool] = False) -> None:
     # noinspection PyUnusedLocal
-    image_out: np.ndarray
-    # noinspection PyUnusedLocal
     name: str
     if mask:
         name = f"{number}_mask.png"
     else:
-        image_out = image
         name = f"{number}.png"
 
-    logging.debug(f"image numbers to save: \n{image_out}")
+    logging.debug(f"image numbers to save: \n{image}")
 
-    cv2.imwrite(OUTPUT_DIRECTORY_LOCATION + name, image_out)
+    cv2.imwrite(OUTPUT_DIRECTORY_LOCATION + name, image)
     logging.info(f"Wrote image to {OUTPUT_DIRECTORY_LOCATION + name}")
+
+
+def save_image_location(location: str = ""):
+    def save_image_inner(image: np.ndarray, number, mask: Optional[bool] = False) -> None:
+        # noinspection PyUnusedLocal
+        logging.info(f"Image size before processing {image.shape}")
+        image_to_write: np.ndarray = np.zeros(image.shape)
+        name: str
+        if mask:
+            name = f"{number}_mask.png"
+            logging.debug(f"Sum: {np.sum(image)}")
+            image_to_write[image > 0.8] = 255
+        else:
+            name = f"{number}.png"
+            image_to_write = image
+
+        logging.debug(f"image numbers to save: \n{image}")
+
+        cv2.imwrite(location + name, image_to_write)
+        logging.info(f"Wrote image to {location + name}")
+
+    return save_image_inner
 
 
 if __name__ == '__main__':
