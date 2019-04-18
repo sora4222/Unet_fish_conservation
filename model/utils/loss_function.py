@@ -59,8 +59,8 @@ def jaccard_distance(smooth):
         :return: A floating point number an element of [0, 1]
         """
         logging.info(f"y_true shape:{y_true.get_shape()}, y_pred shape {y_pred.get_shape()}")
-        intersection = K.sum(K.abs(y_true * y_pred), axis=-1)
-        sum_ = K.sum(K.abs(y_true) + K.abs(y_pred), axis=-1)
+        intersection = K.sum(y_true * y_pred, axis=-1)
+        sum_ = K.sum(y_true + y_pred, axis=-1)
         return (intersection + smooth) / (sum_ - intersection + smooth)
 
     return jaccard_distance_internal

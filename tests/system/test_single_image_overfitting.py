@@ -30,7 +30,7 @@ def test_train_on_alb_img_00019_sparse_crossentropy_compiles_and_gives_results(u
     model = unet_model
 
     optimizer = keras.optimizers.Adam(lr=0.01)
-    model.compile(optimizer=optimizer, loss=keras.losses.sparse_categorical_crossentropy)
+    model.compile(optimizer=optimizer, loss=keras.losses.binary_crossentropy)
 
     validation_data = generate_image_data(1,
                                           str(resource_location.joinpath("images")),
@@ -78,19 +78,21 @@ def test_train_on_alb_img_00019_dice_coef_loss_compiles_and_gives_results(unet_m
     mask will be given back almost perfectly.
     """
     model = unet_model
+    tf.set_random_seed(1)
 
-    optimizer = keras.optimizers.Adam(lr=10)
-    model.compile(optimizer=optimizer, loss=dice_coef_loss())
+    optimizer = keras.optimizers.Adam(lr=0.03)
+
+    model.compile(optimizer=optimizer, loss=dice_coef_loss(100, 1e-10))
 
     validation_data = generate_image_data(1,
                                           str(resource_location.joinpath("images")),
                                           glob_pattern="ALB_img_00019.tif")
-    EPOCHS = 10
+    EPOCHS = 100
     model.fit_generator(
         validation_data,
         steps_per_epoch=1,
         epochs=EPOCHS)
     image, mask = next(validation_data)
-    mask_predict = model.predict(image)
-
-    assert model.evaluate(image, mask) == pytest.approx(0, abs=1e-3)
+    mask_pred = model.predict(image)
+    save_image_location(".pytest_cache/")(mask_pred[0], 1, mask=True)
+    assert model.evaluate(validation_data, steps=1) == pytest.approx(0, abs=5e-2)

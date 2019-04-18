@@ -5,7 +5,7 @@ from tensorflow.python import keras
 from model.utils.loss_function import dice_coef, jaccard_distance, jaccard_distance_loss
 
 
-def test_dice_coef_zeros():
+def test_dice_coef():
     """
     Tests that the dice coefficient give a zero result
     """
@@ -13,12 +13,16 @@ def test_dice_coef_zeros():
     smooth = 1e-12
 
     zeros = np.zeros((2, 2))
-    zeros_tf = keras.backend.variable(zeros, dtype='float64')
-    result = dice_coef(smooth)(zeros_tf, zeros_tf)
+    zeros_tf = keras.backend.variable(zeros)
+    result_zeros = dice_coef(smooth)(zeros_tf, zeros_tf)
+
+    ones_k = keras.backend.variable(np.ones((1, 1)))
+    result_zeros_ones = dice_coef(smooth)(zeros_tf, ones_k)
 
     evaluate_tf = keras.backend.eval
 
-    assert evaluate_tf(result) == approx(1)
+    assert evaluate_tf(result_zeros) == approx(1)
+    assert evaluate_tf(result_zeros_ones) == approx(0)
 
 
 def test_dice_coef_perfect():

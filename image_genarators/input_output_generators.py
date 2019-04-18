@@ -150,7 +150,7 @@ def save_image_location(location: str = ""):
             name = f"{number}.png"
             image_to_write = image
 
-        logging.debug(f"image numbers to save: \n{image}")
+        logging.debug(f"image numbers to save: \n{image_to_write}")
 
         cv2.imwrite(location + name, image_to_write)
         logging.info(f"Wrote image to {location + name}")
