@@ -1,6 +1,7 @@
 import numpy as np
 
 from image_genarators.input_output_generators import generate_image_data
+from image_genarators.utils.image_loading import COLOR_DICT
 
 
 # noinspection PyUnusedLocal
@@ -18,7 +19,7 @@ def test_input_output_generators(path_to_images):
     mask: np.ndarray
     for image, mask in generator:
         assert image.shape == (1, 768, 768, 3)
-        assert mask.shape == (1, 768, 768, 1)
+        assert mask.shape == (1, 768, 768, len(COLOR_DICT))
         if number_of_runs == max_number_of_runs:
             break
         number_of_runs = number_of_runs + 1
@@ -39,7 +40,7 @@ def test_input_output_generator_batch_size(path_to_images):
     mask: np.ndarray
     for image, mask in generator:
         assert image.shape == (2, 768, 768, 3)
-        assert mask.shape == (2, 768, 768, 1)
+        assert mask.shape == (2, 768, 768, len(COLOR_DICT))
         if number_of_runs == max_number_of_runs:
             break
         number_of_runs = number_of_runs + 1
@@ -62,10 +63,10 @@ def test_half_output_generator_sizes(path_to_images):
     for image, mask in generator:
         if number_of_runs % 2 == 0:
             assert image.shape == (2, 768, 768, 3)
-            assert mask.shape == (2, 768, 768, 1)
+            assert mask.shape == (2, 768, 768, len(COLOR_DICT))
         else:
             assert image.shape == (1, 768, 768, 3)
-            assert mask.shape == (1, 768, 768, 1)
+            assert mask.shape == (1, 768, 768, len(COLOR_DICT))
         if number_of_runs == max_number_of_runs:
             break
         number_of_runs = number_of_runs + 1

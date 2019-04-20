@@ -8,8 +8,8 @@ def test_one_hot_encode():
         [[0, 0, 0], [255, 255, 255]],
         [[255, 255, 255], [0, 0, 0]]
     ])
-    expected_mask: np.ndarray = np.array([[[0], [1]], [[1], [0]]], dtype=np.float32)
+    expected_mask: np.ndarray = np.array([[[1, 0], [0, 1]], [[0, 1], [1, 0]]], dtype=np.float32)
     result = one_hot_encode(image)
     print(f"Here: {result}")
-    assert result.shape == (2, 2, 1)
+    assert result.shape == (2, 2, 2)
     assert np.all(expected_mask == result)

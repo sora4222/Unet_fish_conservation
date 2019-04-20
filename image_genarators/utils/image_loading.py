@@ -9,26 +9,25 @@ import numpy as np
 # The classes to classify things as.
 Fish: List[int] = [255, 255, 255]
 Unlabeled: List[int] = [0, 0, 0]
-COLOR_DICT: np.ndarray = np.array([Fish, Unlabeled])
+COLOR_DICT: np.ndarray = np.array([Unlabeled, Fish])
 
 
 def one_hot_encode(mask_image: np.ndarray) -> np.ndarray:
     """
     Performs one-hot encoding on a masking image
     :param mask_image: A mask image to use to obtain classes
-    :return: An array reshaped to be a column vector
+    :return: An array reshaped to be a column vector with the classes encoded
     """
     logging.debug(f"mask image shape: {mask_image.shape}")
-    new_mask: np.ndarray = mask_image[:, :, 0]
+    new_mask: np.ndarray = np.zeros((mask_image.shape[0], mask_image.shape[1], len(COLOR_DICT)))
+    for index_of_one_hot_encoding, identifier in enumerate(COLOR_DICT):
+        mask_full = (mask_image[:, :, 0] == identifier[0]) & \
+                    (mask_image[:, :, 1] == identifier[1]) & \
+                    (mask_image[:, :, 2] == identifier[2])
+        # Reduce to the first two dimensions
+        mask: np.ndarray = mask_full[:, :]
+        new_mask[mask, index_of_one_hot_encoding] = 1
 
-    # Reshapes into a column vector
-    mask_reshaped: np.ndarray = np.reshape(new_mask,
-                                           newshape=(mask_image.shape[0], mask_image.shape[1], 1))
-    logging.debug(f"mask encoded shape: {mask_reshaped.shape}")
-    new_mask = mask_reshaped / 255
-
-    # Currently only accounts for one class
-    new_mask[np.where(new_mask > 0.5)] = 1
     return new_mask.astype(np.int8)
 
 
@@ -40,7 +39,6 @@ def load_mask_image(location: str) -> np.ndarray:
     :return: The mask with one hot encoding for the final channel
     """
     # Reads in the image
-    logging.debug(f"{__name__}: loading mask image")
     image = cv2.imread(location)
 
     image_converted: np.ndarray = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)

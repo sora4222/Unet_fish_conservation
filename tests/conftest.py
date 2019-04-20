@@ -4,6 +4,8 @@ from pathlib import PurePath
 import pytest
 
 
+# Contains configurations to the tests
+
 @pytest.fixture(scope="module")
 def path_to_images() -> PurePath:
     # Obtain the location to the test images
