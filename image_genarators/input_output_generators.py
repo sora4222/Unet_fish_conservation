@@ -162,16 +162,16 @@ def save_image(image: np.ndarray, number, mask: Optional[bool] = False) -> None:
 
 def save_image_location(location: str = ""):
     def save_image_inner(image: np.ndarray, number, mask: Optional[bool] = False) -> None:
-        # TODO: Deal with the new mask
+        # TODO: Deal with the new mask shape
 
         # noinspection PyUnusedLocal
         logging.info(f"Image size before processing {image.shape}")
-        image_to_write: np.ndarray = np.zeros(image.shape)
+        image_to_write: np.ndarray = np.zeros((image.shape[0], image.shape[1], 3))
         name: str
         if mask:
             name = f"{number}_mask.png"
             logging.debug(f"Sum: {np.sum(image)}")
-            image_to_write[image > 0.8] = 255
+            image_to_write[image > 0.5] = 255
         else:
             name = f"{number}.png"
             image_to_write = image

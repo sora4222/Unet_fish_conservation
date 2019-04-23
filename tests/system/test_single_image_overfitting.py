@@ -30,7 +30,7 @@ def test_train_on_alb_img_00019_sparse_crossentropy_compiles_and_gives_results(u
     model = unet_model
 
     optimizer = keras.optimizers.Adam(lr=0.01)
-    model.compile(optimizer=optimizer, loss=keras.losses.binary_crossentropy)
+    model.compile(optimizer=optimizer, loss=keras.losses.categorical_crossentropy)
 
     validation_data = generate_image_data(1,
                                           str(resource_location.joinpath("images")),
@@ -87,7 +87,7 @@ def test_train_on_alb_img_00019_dice_coef_loss_compiles_and_gives_results(unet_m
     validation_data = generate_image_data(1,
                                           str(resource_location.joinpath("images")),
                                           glob_pattern="ALB_img_00019.tif")
-    EPOCHS = 100
+    EPOCHS = 50
     model.fit_generator(
         validation_data,
         steps_per_epoch=1,

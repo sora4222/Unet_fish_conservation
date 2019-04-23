@@ -18,7 +18,7 @@ def unet_model():
     return unet()
 
 
-def test_train_on_alb_img_00019_sparse_crossentropy_compiles_and_runs(unet_model):
+def test_train_on_alb_img_00019_categorical_crossentropy_compiles_and_runs(unet_model):
     """
     Checks this will compile and run one of the images through the sparse cross entropy
     loss function
@@ -26,7 +26,7 @@ def test_train_on_alb_img_00019_sparse_crossentropy_compiles_and_runs(unet_model
     model = unet_model
 
     optimizer = keras.optimizers.Adam(lr=0.001)
-    model.compile(optimizer=optimizer, loss=keras.losses.sparse_categorical_crossentropy)
+    model.compile(optimizer=optimizer, loss=keras.losses.categorical_crossentropy)
 
     validation_data = generate_image_data(1,
                                           str(resource_location.joinpath("images")),

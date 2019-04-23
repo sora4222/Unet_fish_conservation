@@ -14,7 +14,6 @@ def dice_coef(smooth):
         :param y_pred:
         :return:
         """
-
         y_true_f = K.flatten(y_true)
         y_pred_f = K.flatten(y_pred)
         intersection = K.sum(y_true_f * y_pred_f)
@@ -37,6 +36,7 @@ def dice_coef_loss(smooth: Optional[Union[float, int]] = 1,
         :param y_pred:
         :return:
         """
+        print("Sends off")
         logging.info(f"y_true shape:{y_true.get_shape()}, y_pred shape {y_pred.get_shape()}")
         return (1 - dice_coef(smooth_internal)(y_true, y_pred)) * smooth
 
